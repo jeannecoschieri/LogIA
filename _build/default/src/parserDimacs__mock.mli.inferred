@@ -1,0 +1,12 @@
+type token = TokensDimacs.token
+val mk_clause : int list -> Ast.Cnf.elt
+val mk_cnf : int * int -> Ast.Cnf.elt list -> Ast.t
+val menhir_begin_marker : int
+val xv_start : int * int
+val xv_nonempty_list_atom_ : int list
+val xv_list_NEWLINE_ : unit list
+val xv_file : Ast.t
+val xv_cnf : Ast.Cnf.elt list
+val xv_clause : Ast.Cnf.elt
+val xv_atom : int
+val menhir_end_marker : int
