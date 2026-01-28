@@ -1,10 +1,13 @@
+open Ast
+
 module type CHOICE = sig
   val choice : Ast.Cnf.t -> Ast.var
 end
 
 module DefaultChoice =
 struct
-  let choice : Ast.Cnf.t -> Ast.var = fun _ -> failwith "todo: choice"
+  let choice : Ast.Cnf.t -> Ast.var = fun f -> 
+    abs (Ast.Clause.choose (Ast.Cnf.choose f))
 end
 
 module type SOLVER = sig
@@ -18,7 +21,7 @@ struct
   type instance = {
     ast: Ast.t;
     assignment: Ast.model;
-    unbound: LitSet.t
+    unbound: LitSet.t   (* variables that are not assigned yet *)
   }
 
   let assign_literal (instance: instance) (literal: Ast.var): instance =

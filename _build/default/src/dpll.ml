@@ -1,10 +1,13 @@
+open Ast
+
 module type CHOICE = sig
   val choice : Ast.Cnf.t -> Ast.var
 end
 
 module DefaultChoice =
 struct
-  let choice : Ast.Cnf.t -> Ast.var = fun _ -> failwith "todo: choice"
+  let choice : Ast.Cnf.t -> Ast.var = fun f -> 
+    Ast.Clause.choose (Ast.Cnf.choose f)
 end
 
 module type SOLVER = sig

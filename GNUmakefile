@@ -48,7 +48,8 @@ tests_new: build dpll
 #     #SAT     #
 ################
 	
-
+.PHONY: basic 
+basic: ./src/solver.ml 
 
 
 ################

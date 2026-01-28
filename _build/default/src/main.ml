@@ -1,4 +1,5 @@
 open Format
+(* open Solver  *)
 
 type execution_mode =
   | Cnf (** Solve a formula *)
