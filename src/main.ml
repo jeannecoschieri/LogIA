@@ -1,6 +1,6 @@
 open Format
 open Solver
-open Ast
+
 
 type execution_mode =
   | Cnf (** Solve a formula *)
@@ -31,8 +31,8 @@ let handle_file : string -> unit = fun fname ->
 
 let handle_basic : string -> unit = fun fname ->
   let p = Dimacs.parse_file fname in
-  if Solver.cdpll p = 0 then printf "unsat \n"
-  else printf "sat \n solutions...? \n"
+  if cdpll p = 0 then printf "unsat \n"
+  else print_string ("sat " ^ (string_of_int (cdpll p)) ^ " \n solutions...? \n")
 
 
 

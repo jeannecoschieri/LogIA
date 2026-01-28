@@ -1,8 +1,10 @@
 open Format
-(* open Solver  *)
+open Solver
+
 
 type execution_mode =
   | Cnf (** Solve a formula *)
+  | Basic (** Count number of solutions of a formula *)
   | Sudoku of string (** Solve a sudoku given as a string *)
 
 (** By default we solve a formula given in the dimacs format *)
@@ -26,6 +28,13 @@ let handle_file : string -> unit = fun fname ->
 
     if !proof then printf "true: %a\n" pp_list model
     else printf "true@."
+
+let handle_basic : string -> unit = fun fname ->
+  let p = Dimacs.parse_file fname in
+  if cdpll p = 0 then printf "unsat \n"
+  else print_string ("sat " ^ (string_of_int (cdpll p)) ^ " \n solutions...? \n")
+
+
 
 let handle_sudoku : string -> unit = fun str ->
   let sudoku, solution = Sudoku.read str in
@@ -53,7 +62,10 @@ let spec =
         , " Solve a sudoku given on the command line as a string" )
       ; ( "--proof"
         , Arg.Unit (fun () -> proof := true)
-        , " Display variable assignment in CNF mode" ) ]
+        , " Display variable assignment in CNF mode" ) 
+      ; ( "--basic"
+        , Arg.Unit (fun () -> mode := Basic)
+        , "Count number of models that satisfied the formula")]
   in
   spec
 
@@ -68,6 +80,7 @@ let _ =
       match !mode with
       | Cnf -> List.iter handle_file !files
       | Sudoku str ->  handle_sudoku str
+      | Basic -> List.iter handle_basic !files
     end
   with
   | Fatal(None,    msg) -> exit_with "%s" msg

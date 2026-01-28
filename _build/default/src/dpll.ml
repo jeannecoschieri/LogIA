@@ -7,7 +7,7 @@ end
 module DefaultChoice =
 struct
   let choice : Ast.Cnf.t -> Ast.var = fun f -> 
-    Ast.Clause.choose (Ast.Cnf.choose f)
+    abs (Ast.Clause.choose (Ast.Cnf.choose f))
 end
 
 module type SOLVER = sig
@@ -21,7 +21,7 @@ struct
   type instance = {
     ast: Ast.t;
     assignment: Ast.model;
-    unbound: LitSet.t
+    unbound: LitSet.t   (* variables that are not assigned yet *)
   }
 
   let assign_literal (instance: instance) (literal: Ast.var): instance =

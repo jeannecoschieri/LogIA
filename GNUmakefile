@@ -44,12 +44,13 @@ tests_new: build dpll
 	./tests/run_new.sh $(TIMEOUT)
 
 
-################
-#     #SAT     #
-################
+# ################
+# #     #SAT     #
+# ################
 	
-.PHONY: basic 
-basic: ./src/solver.ml 
+# .PHONY: basic 
+# basic: build exec dpll 
+# 	./test.dimacs $(TIMEOUT)
 
 
 ################
