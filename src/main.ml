@@ -1,5 +1,5 @@
 open Format
-open Solver
+open Count
 
 
 type execution_mode =
@@ -29,10 +29,22 @@ let handle_file : string -> unit = fun fname ->
     if !proof then printf "true: %a\n" pp_list model
     else printf "true@."
 
+
+
 let handle_basic : string -> unit = fun fname ->
   let p = Dimacs.parse_file fname in
-  if cdpll p = 0 then printf "unsat \n"
-  else print_string ("sat " ^ (string_of_int (cdpll p)) ^ " \n solutions...? \n")
+  if fst (cdpll p) = 0 then printf "unsat \n"
+  else begin
+    let n,l = cdpll p in 
+    print_string ("sat " ^ (string_of_int n) ^ "\nAssignments that satisfy the formula : \n");
+    let pp_list fmt list =
+      let pp_sep fmt () = fprintf fmt "@ "
+      in fprintf fmt "%a" (pp_print_list ~pp_sep pp_print_int) list in
+    List.iter (fun model -> printf " -> %a\n" pp_list model) l
+  end
+    
+
+
 
 
 

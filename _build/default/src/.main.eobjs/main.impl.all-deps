@@ -1,10 +1,10 @@
 ast
 console
+count
 dimacs
 dpll
 lexerDimacs
 location
 parserDimacs
-solver
 sudoku
 tokensDimacs
