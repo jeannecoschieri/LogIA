@@ -95,7 +95,7 @@ let rec aux_partial f n m l lim : (var * model list) =
       then int_of_float (2. ** (float_of_int (n - (List.length m')))), m' :: l 
     else
       if List.length m' >= lim then 0,l 
-      else begin 
+    else begin 
       let x = selectUnassignVariable f' in 
       let auxt = ref (0,l) in  
       let auxf = ref (0,l) in  
