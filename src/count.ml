@@ -73,3 +73,43 @@ let cdpll f = aux_cdpll f f.nb_var [] []
 
 
 
+(********************* PARTIAL *********************)
+
+
+let rec unit_propagate_part f m lim =  
+  if List.length m >= lim then f, m
+  else try let clause_min = Cnf.min_elt f.cnf in  
+    if Clause.cardinal clause_min = 1 then 
+      let x = Clause.min_elt clause_min in
+      unit_propagate_part (assign {nb_var = f.nb_var; nb_clause = f.nb_clause - 1; cnf = (Cnf.remove clause_min f.cnf)} x) (x :: m) lim
+    else f, m
+  with Not_found -> f, m
+
+
+
+let rec aux_partial f n m l lim : (var * model list) = 
+    let f', m' = unit_propagate_part f m lim in 
+    if have_empty f' (* there is an empty clause in f' *)
+      then 0, l
+    else if Cnf.cardinal f'.cnf = 0 (* all clauses of f are satisfied with m as a model *)
+      then int_of_float (2. ** (float_of_int (n - (List.length m')))), m' :: l 
+    else
+      if List.length m' >= lim then 0,l 
+      else begin 
+      let x = selectUnassignVariable f' in 
+      let auxt = ref (0,l) in  
+      let auxf = ref (0,l) in  
+      (try 
+        auxt := aux_partial (assign f' x) n (x :: m') l lim    (* if x is assign to true *)
+      with
+        |Unsat -> ()
+      );
+      (try 
+        auxf := aux_partial (assign f' (neg x)) n (neg x :: m') l lim    (* if x is assign to false *)
+      with 
+        |Unsat -> ()
+      );
+      fst !auxt + fst !auxf, list_union (snd !auxt) (snd !auxf)
+    end 
+
+  let partial f lim = aux_partial f f.nb_var [] [] lim
