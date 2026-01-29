@@ -68,7 +68,7 @@ let handle_comp : string -> unit = fun fname ->
     let pp_list fmt list =
       let pp_sep fmt () = fprintf fmt "@ "
       in fprintf fmt "%a" (pp_print_list ~pp_sep pp_print_int) list in
-    List.iter (fun model -> printf " -> %a" pp_list model) l
+    List.iter (fun model -> printf " -> %a\n" pp_list model) l
   end
 
 

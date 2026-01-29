@@ -192,8 +192,18 @@ let partition_cnf (f: t): t list =
     components
 
 let dpll_components (f: t): (int * model list) =
-  let res_part = partition_cnf f |> List.map cdpll
+  let (numbers, models) = partition_cnf f |> List.map cdpll |> List.split
   in (
-    List.fold_left (+) 0 (List.map fst res_part),
-    List.fold_left list_union [] (List.map snd res_part)
+    List.fold_left (fun x y -> x*y) 1 numbers,
+    List.fold_left
+    (fun acc l ->
+      List.concat_map
+      (fun m ->
+        List.map
+        (fun m' -> m'@m)
+        acc
+      ) 
+      l
+    )
+    [[]] models
   )
