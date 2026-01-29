@@ -93,7 +93,7 @@ let spec =
         , "Count number of models that satisfied the formula")
       ; ( "--partial"
         , Arg.String (fun n -> mode := Partial (int_of_string n))
-        , "Count number of models that satisfied the formula")]
+        , "Compute a lower bound on the number of models given a limit on their size")]
   in
   spec
 
