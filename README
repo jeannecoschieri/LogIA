@@ -1,0 +1,51 @@
+Projet : Counting SAT Solutions
+Jeanne Coschieri - Corentin Jazeron
+
+
+
+##### Instructions de compilation #####
+
+Nous n'avons pas prévu de commande pour tester tous les fichiers à la suite. Nous n'en voyions pas l'intêret puisque calculer le nombre de modèles satisfaisant une formule est très (très) long, notamment pour de grosses formules, comme celles données dans le dossier `test`, à moins de limiter avec l'option --partial avec une petite limite. Cependant, les formules ont généralement plus de 500 variables, et déjà pour une limite posée à 100, l'appel à CDPLL dure parfois plus de 15 minutes. 
+Il y a deux possibilités pour utiliser le solver sur un fichier donné, décrites ci-dessous. 
+
+# Avec make
+
+La première solution est la suivante : 
+`make option [LIM=n] FILE=chemin/vers/mon_fichier.dimacs` 
+où option = basic | partial | comp | cosat,
+Dans le cas de partial, on ajoute `LIM=n` où n est la limite entière qu'on instaure. 
+
+# Sans make
+
+Il est également possible de compiler avec la commande : 
+`dune exec dpll -- --option [n] chemin/vers/mon_fichier.dimacs`
+où option = basic | partial | comp | cosat. 
+
+
+
+
+
+
+##### Choix d'implémentation ##### 
+
+
+Notre code est principalement dans le fichier count.ml
+et on a adapté le fichier main.ml pour gérer les options. 
+
+# Basic 
+
+pas grand chose à dire je crois... en gros on a implémenté l'algo quoi
+
+
+# Partial
+
+pas trop compris la question, on a supposé qu'il fallait compter le nombre
+de modèles satisfaisant la formule qu'on trouve en assignant au plus 
+N variables. 
+Rien de plus à dire, le code est très proche de celui de Basic. 
+
+
+# Comp 
+
+
+# CoSat 

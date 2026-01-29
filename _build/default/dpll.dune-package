@@ -1,4 +1,4 @@
 (lang dune 3.21)
 (name dpll)
-(sections (lib .) (bin ../../bin))
-(files (lib (META dune-package opam)) (bin (dpll)))
+(sections (lib .) (bin ../../bin) (doc ../../doc/dpll))
+(files (lib (META dune-package opam)) (bin (dpll)) (doc (README)))

@@ -4,6 +4,7 @@ include GNUmakefile.conf
 #   General    #
 ################
 
+
 .PHONY: default
 default: build
 
@@ -48,9 +49,21 @@ tests_new: build dpll
 # #     #SAT     #
 # ################
 	
-# .PHONY: basic 
-# basic: build exec dpll 
-# 	./test.dimacs $(TIMEOUT)
+.PHONY: basic 
+basic: dune build
+	dune exec dpll -- --basic $(FILE)
+
+.PHONY: partial
+partial: dune build
+	dune exec dpll -- --partial $(LIM) $(FILE)
+
+.PHONY: comp
+comp: dune build
+	dune exec dpll -- --comp $(FILE)
+
+.PHONY: cosat
+cosat: dune build
+	dune exec dpll -- --cosat $(FILE)
 
 
 ################
