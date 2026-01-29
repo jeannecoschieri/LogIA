@@ -5,10 +5,10 @@ type var = int
 type lit = int
 
 (** Contains litterals that satisfy a cnf formula as returned by a SAT solver. *)
-type model = int list
+type model = lit list
 
 (** A set of variables *)
-module Clause : Set.S with type elt = var
+module Clause : Set.S with type elt = lit
 
 (** A set of clauses *)
 module Cnf : Set.S with type elt = Clause.t

@@ -6,9 +6,8 @@ exception EmptyCNF
 let assign f x = 
   let new_cnf = Cnf.fold 
                     (fun c acc ->
-                      if Clause.cardinal c = 1 && Clause.mem x c then acc
+                      if Clause.mem x c then acc
                       else if Clause.cardinal c = 1 && Clause.mem (neg x) c then raise Unsat
-                      else if Clause.mem x c then acc
                       else if Clause.mem (neg x) c then Cnf.add (Clause.remove (neg x) c) acc
                       else Cnf.add c acc)
                       f.cnf Cnf.empty in  
@@ -43,13 +42,13 @@ let rec list_union l1 l2 = match l1,l2 with
 
 (********************* BASIC *********************)
 
-let rec aux_cdpll f n m l : (var * model list) = 
+let rec aux_cdpll f n m l : (int * model list) = 
   let f', m' = unit_propagate f m in 
   if have_empty f' (* there is an empty clause in f' *)
     then 0, l
   else if Cnf.cardinal f'.cnf = 0 (* all clauses of f are satisfied with m as a model *)
     then int_of_float (2. ** (float_of_int (n - (List.length m')))), m' :: l 
-  else
+  else begin
     let x = selectUnassignVariable f' in 
     let auxt = ref (0,l) in  (* if x is assign to true *)
     let auxf = ref (0,l) in  (* if x is assign to false *)
@@ -64,6 +63,7 @@ let rec aux_cdpll f n m l : (var * model list) =
       |Unsat -> ()
     );
     fst !auxt + fst !auxf, list_union (snd !auxt) (snd !auxf)
+  end
 
 
 
