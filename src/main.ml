@@ -6,6 +6,7 @@ type execution_mode =
   | Cnf (** Solve a formula *)
   | Basic (** Count number of solutions of a formula *)
   | Partial of int  (** Count number of solutions given a limit *)
+  | Components (** Same as basic but decompose the problem by components *)
   | Sudoku of string (** Solve a sudoku given as a string *)
 
 
@@ -58,7 +59,19 @@ let handle_partial n fname =
     List.iter (fun model -> printf " -> %a\n" pp_list model) l
   end
 
-  
+let handle_comp : string -> unit = fun fname ->
+  let p = Dimacs.parse_file fname in
+  let nb, l = dpll_components p in
+  if nb = 0 then printf "unsat \n"
+  else begin
+    print_string ("sat " ^ (string_of_int nb) ^ "\nAssignments that satisfy the formula : \n");
+    let pp_list fmt list =
+      let pp_sep fmt () = fprintf fmt "@ "
+      in fprintf fmt "%a" (pp_print_list ~pp_sep pp_print_int) list in
+    List.iter (fun model -> printf " -> %a\n" pp_list model) l
+  end
+
+
 
 
 let handle_sudoku : string -> unit = fun str ->
@@ -93,7 +106,10 @@ let spec =
         , "Count number of models that satisfied the formula")
       ; ( "--partial"
         , Arg.String (fun n -> mode := Partial (int_of_string n))
-        , "Compute a lower bound on the number of models given a limit on their size")]
+        , "Compute a lower bound on the number of models given a limit on their size")
+      ; ( "--comp"
+        , Arg.Unit (fun () -> mode := Components)
+        , "Same as basic but decompose the problem by components")]
   in
   spec
 
@@ -109,6 +125,7 @@ let _ =
       | Cnf -> List.iter handle_file !files
       | Sudoku str ->  handle_sudoku str
       | Basic -> List.iter handle_basic !files
+      | Components -> List.iter handle_comp !files
       | Partial n -> List.iter (fun x -> handle_partial n x) !files
     end
   with
