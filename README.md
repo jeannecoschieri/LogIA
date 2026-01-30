@@ -46,6 +46,7 @@ On a fait le choix d'utiliser le type `IntSet.t IntMap.t` pour représenter un g
 Pour créer le graphe, l'algorithme itère sur chaque couple de sommets dans les différentes clauses avec une boucle double, donnant une complexité en *n^2*, qui pourrait être réduite en *n(n-1)/2*.
 L'algorithme est **nettement** plus rapide si on ne lui demande pas de calculer les modèles totaux. En effet, calculer ces derniers nécéssite une sorte de "multiplication-concaténation" des différents modèles des Fk, laquelle est couteuse comme les modèles sont des listes.
 
+
 # Cosat
 
 On utilise le module Sys pour lancer la commande minisat depuis un terminal virtuel, en jetant toutes les sorties dans `/dev/null`, car seul la valeur de retour (10 ou 20) nous interesse. La méthode est : partitionner -> transformer chaque Fk en un fichier dimacs -> lancer MiniSat dessus -> si aucun ne renvoie unsat, continuer comme dans component.

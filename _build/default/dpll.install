@@ -7,5 +7,5 @@ bin: [
   "_build/install/default/bin/dpll"
 ]
 doc: [
-  "_build/install/default/doc/dpll/README"
+  "_build/install/default/doc/dpll/README.md"
 ]

@@ -87,6 +87,7 @@ let rec unit_propagate_part f m lim =
 
 
 
+  (* almost the same as aux_basic, except that the size of m is bounded by n, the argument given by the user after --partial *)
 let rec aux_partial f n m l lim : (int * model list) = 
     let f', m' = unit_propagate_part f m lim in 
     if have_empty f' (* there is an empty clause in f' *)
@@ -259,14 +260,16 @@ let write_dimacs (filename : string) (f : t) =
 
   match code with
   | 10 -> true
-  | 20 -> print_string "a component is not sat \n"; false
-  | _  -> failwith "MiniSAT error"
+  | 20 -> false
+  | _  -> failwith "MiniSAT error - MiniSAT may not be installed"
 
 
+
+(* almost the same as dpll_component, except that each component is tested with miniSAT *)
 let dpll_cosat (f: t): (int * model list) = 
   let part = partition_cnf f in 
-  if List.fold_left (fun acc f -> if acc && not (is_sat f) then false else true) true part then 
-    let (numbers, models) = part |> List.map cdpll |> List.split
+  if List.for_all is_sat part then (* If each subformula is satisfiable *)
+  let (numbers, models) = part |> List.map cdpll |> List.split
   in (
     List.fold_left (fun x y -> x*y) 1 numbers, (* Product of each number of models *)
     List.fold_left
@@ -284,5 +287,5 @@ let dpll_cosat (f: t): (int * model list) =
     )
     [[]] models
   )
-  else
+  else (* Formula is unsatisfiable *)
     0, []
