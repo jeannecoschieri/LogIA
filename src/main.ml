@@ -7,6 +7,7 @@ type execution_mode =
   | Basic (** Count number of solutions of a formula *)
   | Partial of int  (** Count number of solutions given a limit *)
   | Components (** Same as basic but decompose the problem by components *)
+  | Cosat (** decompose by components as Components and test each component with miniSAT *)
   | Sudoku of string (** Solve a sudoku given as a string *)
 
 
@@ -72,6 +73,19 @@ let handle_comp : string -> unit = fun fname ->
   end
 
 
+  let handle_cosat : string -> unit = fun fname ->
+    let p = Dimacs.parse_file fname in
+    let nb, l = dpll_cosat p in
+    if nb = 0 then printf "unsat \n"
+    else begin
+      print_string ("sat " ^ (string_of_int nb) ^ "\nAssignments that satisfy the formula : \n");
+      let pp_list fmt list =
+        let pp_sep fmt () = fprintf fmt "@ "
+        in fprintf fmt "%a" (pp_print_list ~pp_sep pp_print_int) list in
+      List.iter (fun model -> printf " -> %a\n" pp_list model) l
+    end
+
+
 
 
 let handle_sudoku : string -> unit = fun str ->
@@ -109,7 +123,10 @@ let spec =
         , "Compute a lower bound on the number of models given a limit on their size")
       ; ( "--comp"
         , Arg.Unit (fun () -> mode := Components)
-        , "Same as basic but decompose the problem by components")]
+        , "Same as basic but decompose the problem by components")
+      ; ( "--cosat"
+        , Arg.Unit (fun () -> mode := Cosat)
+        , "Same as basic but decompose the problem by components and test staisfiability of each component with miniSAT ")]
   in
   spec
 
@@ -127,6 +144,7 @@ let _ =
       | Basic -> List.iter handle_basic !files
       | Components -> List.iter handle_comp !files
       | Partial n -> List.iter (fun x -> handle_partial n x) !files
+      | Cosat -> List.iter handle_cosat !files
     end
   with
   | Fatal(None,    msg) -> exit_with "%s" msg

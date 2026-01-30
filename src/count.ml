@@ -114,6 +114,9 @@ let rec aux_partial f n m l lim : (int * model list) =
 
 let partial f lim = aux_partial f f.nb_var [] [] lim
 
+
+
+
 (********************* COMPONENT *********************)
 
 module IntSet = Set.Make (Int) (* Set of integers *)
@@ -220,3 +223,66 @@ let dpll_components (f: t): (int * model list) =
     )
     [[]] models
   )
+
+
+
+
+(********************* COSAT *********************)
+
+
+
+(* to transform a formula of type t into a file .dimacs *)
+let write_dimacs (filename : string) (f : t) =  
+  let output = open_out filename in  
+  Printf.fprintf output "p cnf %d %d\n" f.nb_var f.nb_clause;  
+  Cnf.iter  
+  (fun clause ->  
+    Clause.iter (fun lit -> Printf.fprintf output "%d " lit) clause;  
+    Printf.fprintf output "0\n")  
+  f.cnf;  
+  close_out output  
+
+
+
+(* test with miniSAT if a formula of type t is sat or not *)
+  let is_sat (f: t) : bool =
+  let cnf_file = Filename.temp_file "component" ".cnf" in
+
+  write_dimacs cnf_file f;
+
+  let cmd =
+    Printf.sprintf "minisat %s /dev/null 1> /dev/null 2> /dev/null" cnf_file
+  in
+  let code = Sys.command cmd in
+
+  Sys.remove cnf_file;
+
+  match code with
+  | 10 -> true
+  | 20 -> print_string "a component is not sat \n"; false
+  | _  -> failwith "MiniSAT error"
+
+
+let dpll_cosat (f: t): (int * model list) = 
+  let part = partition_cnf f in 
+  if List.fold_left (fun acc f -> if acc && not (is_sat f) then false else true) true part then 
+    let (numbers, models) = part |> List.map cdpll |> List.split
+  in (
+    List.fold_left (fun x y -> x*y) 1 numbers, (* Product of each number of models *)
+    List.fold_left
+    (* Concatenate each partial model for Fi with all those
+    for Fj, j different from i, and take the list of all of those models *)
+    (fun acc l ->
+      List.concat_map
+      (* Iterate on each l element to concatenate it to each element of acc *)
+      (fun m ->
+        List.map
+        (fun m' -> m'@m)
+        acc
+      ) 
+      l
+    )
+    [[]] models
+  )
+  else
+    0, []

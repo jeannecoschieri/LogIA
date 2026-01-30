@@ -114,18 +114,23 @@ let rec aux_partial f n m l lim : (int * model list) =
 
 let partial f lim = aux_partial f f.nb_var [] [] lim
 
+
+
+
 (********************* COMPONENT *********************)
 
-module IntSet = Set.Make (Int)
-module IntMap = Map.Make (Int)
-type graph = IntSet.t IntMap.t
+module IntSet = Set.Make (Int) (* Set of integers *)
+module IntMap = Map.Make (Int) 
+type graph = IntSet.t IntMap.t (* A graph maps vertices to their neighbourhood *)
 
-let vars_of_clause (c: Clause.t): IntSet.t =
+(* Return the set of variables appearing as literals in a clause c *)
+let vars_of_clause (c: Clause.t): IntSet.t = 
   Clause.fold (fun lit acc -> IntSet.add (abs lit) acc) c IntSet.empty
 
+(* Build the constraint graph of the formula f *)
 let build_constraint_graph (f: Cnf.t): graph =
-  let add_edge (x:int) (y:int) (g:graph): graph =
-    let add_one (a:int) (b:int) (g: graph): graph =
+  let add_edge (x: int) (y: int) (g: graph): graph = (* Add edge (x, y) to g *)
+    let add_one (a: int) (b: int) (g: graph): graph =  (* Add b to the neighbourhood of a *)
       let voisins = IntMap.find_opt a g |> Option.value ~default:IntSet.empty in
       IntMap.add a (IntSet.add b voisins) g
     in
@@ -135,7 +140,8 @@ let build_constraint_graph (f: Cnf.t): graph =
   Cnf.fold
     (fun c g ->
        let vars = IntSet.elements (vars_of_clause c) in
-       List.fold_left
+       List.fold_left (* Iterate on each pair (x, y) of variables
+                      in the clause c and add the corresponding edge *)
          (fun g x ->
             List.fold_left
               (fun g y -> if x = y then g else add_edge x y g)
@@ -143,7 +149,9 @@ let build_constraint_graph (f: Cnf.t): graph =
          g vars)
     f IntMap.empty
 
+(* Return the connected components of graph g *)
 let connected_components (g: graph): IntSet.t list =
+  (* Basic dfs, visited is global and comp is the current connected component *)
   let rec dfs (v: int) (visited: IntSet.t) (comp: IntSet.t): IntSet.t * IntSet.t =
     if IntSet.mem v visited then (visited, comp)
     else
@@ -158,6 +166,7 @@ let connected_components (g: graph): IntSet.t list =
         (visited, comp)
   in
 
+  (* Run the dfs on each unvisited vertice, and store the found connected components in acc *)
   let rec loop (vars: int list) (visited: IntSet.t) (acc: IntSet.t list): IntSet.t list =
     match vars with
     | [] -> acc
@@ -171,33 +180,40 @@ let connected_components (g: graph): IntSet.t list =
 
   loop (List.map fst (IntMap.bindings g)) IntSet.empty []
 
+(* Give the partition of subformulas such that variable sets are disjoints *)
 let partition_cnf (f: t): t list =
   let graph = build_constraint_graph f.cnf in
   let components = connected_components graph in
+  (* Build the constraint graph and calculate the connected components *)
 
   List.map
-    (fun vars ->
+    (fun vars -> (* Iterate on each connected component *)
        let cnf_i =
-         Cnf.filter
+         Cnf.filter (* Keep each clause such that all variables are in the component *)
            (fun clause ->
               let clause_vars = vars_of_clause clause in
               IntSet.subset clause_vars vars)
            f.cnf
        in
-       {
+       { (* Build the subformula *)
          nb_var = IntSet.cardinal vars;
          nb_clause = Cnf.cardinal cnf_i;
          cnf = cnf_i;
        })
     components
 
+(* Apply DPLL method with connected components preprocessing *)
 let dpll_components (f: t): (int * model list) =
+  (* Apply DPLL on each subformula *)
   let (numbers, models) = partition_cnf f |> List.map cdpll |> List.split
   in (
-    List.fold_left (fun x y -> x*y) 1 numbers,
+    List.fold_left (fun x y -> x*y) 1 numbers, (* Product of each number of models *)
     List.fold_left
+    (* Concatenate each partial model for Fi with all those
+    for Fj, j different from i, and take the list of all of those models *)
     (fun acc l ->
       List.concat_map
+      (* Iterate on each l element to concatenate it to each element of acc *)
       (fun m ->
         List.map
         (fun m' -> m'@m)
@@ -207,3 +223,66 @@ let dpll_components (f: t): (int * model list) =
     )
     [[]] models
   )
+
+
+
+
+(********************* COSAT *********************)
+
+
+
+(* to transform a formula of type t into a file .dimacs *)
+let write_dimacs (filename : string) (f : t) =  
+  let output = open_out filename in  
+  Printf.fprintf output "p cnf %d %d\n" f.nb_var f.nb_clause;  
+  Cnf.iter  
+  (fun clause ->  
+    Clause.iter (fun lit -> Printf.fprintf output "%d " lit) clause;  
+    Printf.fprintf output "0\n")  
+  f.cnf;  
+  close_out output  
+
+
+
+(* test with miniSAT if a formula of type t is sat or not *)
+  let is_sat (f: t) : bool =
+  let cnf_file = Filename.temp_file "component" ".cnf" in
+
+  write_dimacs cnf_file f;
+
+  let cmd =
+    Printf.sprintf "minisat %s /dev/null 1> /dev/null 2> /dev/null" cnf_file
+  in
+  let code = Sys.command cmd in
+
+  Sys.remove cnf_file;
+
+  match code with
+  | 10 -> true
+  | 20 -> print_string "a component is not sat \n"; false
+  | _  -> failwith "MiniSAT error"
+
+
+let dpll_cosat (f: t): (int * model list) = 
+  let part = partition_cnf f in 
+  if List.fold_left (fun acc f -> if acc && not (is_sat f) then false else true) true part then 
+    let (numbers, models) = part |> List.map cdpll |> List.split
+  in (
+    List.fold_left (fun x y -> x*y) 1 numbers, (* Product of each number of models *)
+    List.fold_left
+    (* Concatenate each partial model for Fi with all those
+    for Fj, j different from i, and take the list of all of those models *)
+    (fun acc l ->
+      List.concat_map
+      (* Iterate on each l element to concatenate it to each element of acc *)
+      (fun m ->
+        List.map
+        (fun m' -> m'@m)
+        acc
+      ) 
+      l
+    )
+    [[]] models
+  )
+  else
+    0, []
